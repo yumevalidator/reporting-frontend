@@ -1,5 +1,8 @@
+"use client"
+
+import { useEffect, useState } from "react";
 import Image from "next/image";
-import { CircleCheck, CircleAlert, Info, CircleX } from "lucide-react";
+import { CircleCheck, CircleAlert, Info, CircleX, ArrowLeft, ArrowRight } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Card,
@@ -26,6 +29,76 @@ import {
 import { CodeBlock } from "@/components/ui/code-block";
 
 export default function Home() {
+  
+  interface VisualTestResult {
+    page_title: string;
+    page_id: string;
+    working: {
+      title: string;
+      description: string;
+    }[];
+    errors: {
+      title: string;
+      description: string;
+      destination_link: string;
+    }[];
+    recommendations: {
+      title: string;
+      description: string;
+    }[];
+  }
+
+  interface FunctionalTestResult {
+    page_title: string;
+    description: string;
+    succeeded: boolean;
+    // Add other properties if needed
+  }
+
+  const [visual_test_results, setVisualTestResult] = useState<VisualTestResult[]>([]);
+  const [functional_test_results, setFunctionalTestResult] = useState<FunctionalTestResult[]>([]);
+  const [current_design_selection_index, set_current_design_selection_index] = useState(0);
+
+  useEffect(() => {
+    // Your code here
+    fetch("http://localhost:9001/functional_testing_results.json")
+      .then((response) => {
+        response.json().then((data) => {
+          console.log(data)
+          setFunctionalTestResult(data)
+        })
+      })
+      .catch((error) => console.error("Error fetching functional test results:", error));
+  }, []);
+
+  useEffect(() => {
+    // Your code here
+    fetch("http://localhost:9001/visual_testing_results.json")
+      .then((response) => {
+        response.json().then((data) => {
+          console.log(data)
+          setVisualTestResult(data)
+        })
+      })
+      .catch((error) => console.error("Error fetching visual test results:", error));
+  })
+
+  const reduce_design_selection_index = () => {
+    if (current_design_selection_index > 0) {
+      set_current_design_selection_index(current_design_selection_index - 1);
+    }else{
+      set_current_design_selection_index(visual_test_results.length - 1);
+    }
+  }
+
+  const increase_design_selection_index = () => {
+    if (current_design_selection_index < visual_test_results.length - 1) {
+      set_current_design_selection_index(current_design_selection_index + 1);
+    }else{
+      set_current_design_selection_index(0);
+    }
+  }
+
   const code = `const DummyComponent = () => {
   const [count, setCount] = React.useState(0);
 
@@ -66,30 +139,45 @@ export default function Home() {
           <TabsContent value="UI" className="mt-8">
             <div className="grid grid-cols-2 gap-x-20">
               <div>
-                <div className="flex items-center justify-center rounded-full h-10 w-40 shadow-lg font-bold">
-                  Figma Design
+                <div className="flex flex-row items-center">
+                  <div className="justify-start flex">
+                    <div className="flex items-center justify-center rounded-full h-10 w-40 shadow-lg font-bold">
+                      Figma Design
+                    </div>
+                  </div>
+                  <div className="flex">
+                    <ArrowLeft onClick={reduce_design_selection_index}></ArrowLeft>
+                    <ArrowRight onClick={increase_design_selection_index}></ArrowRight>
+                  </div>
                 </div>
                 <div className="bg-[#f8fafc] rounded-lg mt-4 flex items-center justify-center">
-                  <Image
-                    src="https://media.licdn.com/dms/image/v2/D4D12AQHA4SPDhRLMoA/article-cover_image-shrink_720_1280/article-cover_image-shrink_720_1280/0/1696403345515?e=2147483647&v=beta&t=iFMy2BTouIMesYEzfTerN5wqMN_1DrNV3pKGTQKbP40"
-                    alt="Image"
-                    width={600}
-                    height={400}
-                    className="rounded-lg"
-                  />
+
+                    {visual_test_results.length > 0 && (
+                      <img
+                        src={`http://localhost:9001/${visual_test_results[current_design_selection_index].page_id}.png`}
+                        alt="Image"
+                        width={600}
+                        height={400}
+                        className="rounded-lg"
+                      />
+                    )}
+                
                 </div>
                 <div className="flex items-center justify-center rounded-full h-10 w-52 shadow-lg font-bold mt-6">
                   Code Implementation
                 </div>
                 <div className="bg-[#f8fafc] rounded-lg mt-4 flex items-center justify-center">
-                  <Image
-                    src="https://media.licdn.com/dms/image/v2/D4D12AQHA4SPDhRLMoA/article-cover_image-shrink_720_1280/article-cover_image-shrink_720_1280/0/1696403345515?e=2147483647&v=beta&t=iFMy2BTouIMesYEzfTerN5wqMN_1DrNV3pKGTQKbP40"
-                    alt="Image"
-                    width={600}
-                    height={400}
-                    className="rounded-lg"
-                  />
-                </div>
+                  {visual_test_results.length > 0 && (
+                    <img
+                      src={`http://localhost:9001/screenshot_${visual_test_results[current_design_selection_index].page_id}.png`}
+                      alt="Image"
+                      width={600}
+                      height={400}
+                      className="rounded-lg"
+                    />
+                  )}
+
+                  </div>
               </div>
               <div className="mr-4">
                 <Tabs defaultValue="working">
@@ -101,71 +189,61 @@ export default function Home() {
                     <TabsTrigger value="reco">Recommendations</TabsTrigger>
                   </TabsList>
                   <TabsContent value="working">
-                    <Card>
-                      <CardHeader>
-                        <div className="flex items-center gap-x-3">
-                          <CircleCheck className="text-green-500" />
-                          <div className="flex flex-col">
-                            <CardTitle>Use of colors are correct</CardTitle>
-                            <CardDescription>
-                              Lorem ipsum dolor sit amet, consectetur adipiscing
-                            </CardDescription>
-                          </div>
-                        </div>
-                      </CardHeader>
-                    </Card>
+                    {
+                      (visual_test_results[current_design_selection_index].working).map((result, index) => (
+                        <Card key={index}>
+                          <CardHeader>
+                            <div className="flex items-center gap-x-3">
+                              <CircleCheck className="text-green-500" />
+                              <div className="flex flex-col">
+                                <CardTitle>{result.title}</CardTitle>
+                                <CardDescription>{result.description}</CardDescription>
+                              </div>
+                            </div>
+                          </CardHeader>
+                        </Card>
+                      ))
+                    }
                   </TabsContent>
                   <TabsContent value="improve">
-                    <Card>
-                      <CardHeader>
-                        <div className="flex items-center gap-x-3">
-                          <CircleAlert className="text-orange-500" />
-                          <div className="flex flex-col">
-                            <CardTitle>Incorrect Font Size</CardTitle>
-                            <CardDescription>
-                              Lorem ipsum dolor sit amet, consectetur adipiscing
-                            </CardDescription>
-                          </div>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="ml-8 -mt-4">
-                        <Button variant="outline">Highlight Section</Button>
-                      </CardContent>
-                    </Card>
+                    {
+                      (visual_test_results[current_design_selection_index].errors).map((result, index) => (
+                        <Card key={index}>
+                          <CardHeader>
+                            <div className="flex items-center gap-x-3">
+                              <CircleX className="text-red-500" />
+                              <div className="flex flex-col">
+                                <CardTitle>{result.title}</CardTitle>
+                                <CardDescription>{result.description}</CardDescription>
+                              </div>
+                            </div>
+                          </CardHeader>
+                          <CardContent className="ml-8 -mt-4">
+                            <Button variant="outline">Highlight Section</Button>
+                          </CardContent>
+                        </Card>
+                      ))
+                    }
                   </TabsContent>
                   <TabsContent value="reco">
-                    <Card>
-                      <CardHeader>
-                        <div className="grid grid-cols-3 items-center">
-                          <div className="col-span-2">
-                            <CardTitle>Commit all recommendations</CardTitle>
-                            <CardDescription className="mt-2">
-                              We will commit all of the recommendations give to
-                              your code implementation.
-                            </CardDescription>
-                          </div>
-                          <div className="justify-self-end">
-                            <Button variant="default">Commit</Button>
-                          </div>
-                        </div>
-                      </CardHeader>
-                    </Card>
-                    <Card className="mt-4">
-                      <CardHeader>
-                        <div className="flex items-center gap-x-3">
-                          <Info className="text-blue-500" />
-                          <div className="flex flex-col">
-                            <CardTitle>Ammend font size</CardTitle>
-                            <CardDescription>
-                              Lorem ipsum dolor sit amet, consectetur adipiscing
-                            </CardDescription>
-                          </div>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="ml-8 -mt-4">
-                        <Button variant="outline">Commit Recommendation</Button>
-                      </CardContent>
-                    </Card>
+                    {
+                      (visual_test_results[current_design_selection_index].recommendations).map((result, index) => (
+                        <Card key={index}>
+                          <CardHeader>
+                            <div className="flex items-center gap-x-3">
+                              <Info className="text-blue-500" />
+                              <div className="flex flex-col">
+                                <CardTitle>{result.title}</CardTitle>
+                                <CardDescription>{result.description}</CardDescription>
+                              </div>
+                            </div>
+                          </CardHeader>
+                          <CardContent className="ml-8 -mt-4">
+                            <Button variant="outline">Commit Recommendation</Button>
+                          </CardContent>
+                        </Card>
+                      ))
+                    }
                   </TabsContent>
                 </Tabs>
               </div>
@@ -334,21 +412,25 @@ export default function Home() {
               <AccordionItem value="behaviour">
                 <AccordionTrigger>Functional behaviour</AccordionTrigger>
                 <AccordionContent>
-                  <Card>
-                    <CardHeader>
-                      <div className="flex items-center gap-x-3">
-                        <CircleCheck className="text-green-500" />
-                        <div className="flex flex-col gap-y-1">
-                          <CardTitle>
-                            Ensure navigation works correctly
-                          </CardTitle>
-                          <CardDescription>
-                            Lorem ipsum dolor sit amet, consectetur adipiscing
-                          </CardDescription>
-                        </div>
-                      </div>
-                    </CardHeader>
-                  </Card>
+                  {
+                    (functional_test_results).map((result: any, index: number) => (
+                      <Card key={index}>
+                        <CardHeader>
+                          <div className="flex items-center gap-x-3">
+                            {result.succeeded ? (
+                              <CircleCheck className="text-green-500" />
+                            ) : (
+                              <CircleX className="text-red-500" />
+                            )}
+                            <div className="flex flex-col gap-y-1">
+                              <CardTitle>{result.page_title}</CardTitle>
+                              <CardDescription>{result.description}</CardDescription>
+                            </div>
+                          </div>
+                        </CardHeader>
+                      </Card>
+                    ))
+                  }
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
