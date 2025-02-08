@@ -1,8 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
-import { CircleCheck, CircleAlert, Info, CircleX, ArrowLeft, ArrowRight } from "lucide-react";
+import { CircleCheck, Info, CircleX, ArrowLeft, ArrowRight } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Card,
@@ -37,7 +36,7 @@ export default function Home() {
       title: string;
       description: string;
     }[];
-    errors: {
+    wrong: {
       title: string;
       description: string;
       destination_link: string;
@@ -167,6 +166,7 @@ export default function Home() {
                   Code Implementation
                 </div>
                 <div className="bg-[#f8fafc] rounded-lg mt-4 flex items-center justify-center">
+                  
                   {visual_test_results.length > 0 && (
                     <img
                       src={`http://localhost:9001/screenshot_${visual_test_results[current_design_selection_index].page_id}.png`}
@@ -190,24 +190,26 @@ export default function Home() {
                   </TabsList>
                   <TabsContent value="working">
                     {
+                      visual_test_results.length > 0 && (
                       (visual_test_results[current_design_selection_index].working).map((result, index) => (
-                        <Card key={index}>
-                          <CardHeader>
-                            <div className="flex items-center gap-x-3">
-                              <CircleCheck className="text-green-500" />
-                              <div className="flex flex-col">
-                                <CardTitle>{result.title}</CardTitle>
-                                <CardDescription>{result.description}</CardDescription>
-                              </div>
-                            </div>
-                          </CardHeader>
-                        </Card>
-                      ))
+                      <Card key={`${current_design_selection_index}-${index}`}>
+                        <CardHeader>
+                        <div className="flex items-center gap-x-3">
+                          <CircleCheck className="text-green-500" />
+                          <div className="flex flex-col">
+                          <CardTitle>{result.title}</CardTitle>
+                          <CardDescription>{result.description}</CardDescription>
+                          </div>
+                        </div>
+                        </CardHeader>
+                      </Card>
+                      )))
                     }
                   </TabsContent>
                   <TabsContent value="improve">
                     {
-                      (visual_test_results[current_design_selection_index].errors).map((result, index) => (
+                      visual_test_results.length > 0 && (
+                      (visual_test_results[current_design_selection_index].wrong).map((result, index) => (
                         <Card key={index}>
                           <CardHeader>
                             <div className="flex items-center gap-x-3">
@@ -222,11 +224,12 @@ export default function Home() {
                             <Button variant="outline">Highlight Section</Button>
                           </CardContent>
                         </Card>
-                      ))
+                      )))
                     }
                   </TabsContent>
                   <TabsContent value="reco">
                     {
+                      visual_test_results.length > 0 && (
                       (visual_test_results[current_design_selection_index].recommendations).map((result, index) => (
                         <Card key={index}>
                           <CardHeader>
@@ -242,7 +245,7 @@ export default function Home() {
                             <Button variant="outline">Commit Recommendation</Button>
                           </CardContent>
                         </Card>
-                      ))
+                      )))
                     }
                   </TabsContent>
                 </Tabs>
