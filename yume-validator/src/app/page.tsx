@@ -1,7 +1,13 @@
-"use client"
+"use client";
 
 import { useEffect, useState } from "react";
-import { CircleCheck, Info, CircleX, ArrowLeft, ArrowRight } from "lucide-react";
+import {
+  CircleCheck,
+  Info,
+  CircleX,
+  ArrowLeft,
+  ArrowRight,
+} from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Card,
@@ -26,9 +32,9 @@ import {
   SheetFooter,
 } from "@/components/ui/sheet";
 import { CodeBlock } from "@/components/ui/code-block";
+import { Progress } from "@/components/ui/progress";
 
 export default function Home() {
-  
   interface VisualTestResult {
     page_title: string;
     page_id: string;
@@ -54,20 +60,40 @@ export default function Home() {
     // Add other properties if needed
   }
 
-  const [visual_test_results, setVisualTestResult] = useState<VisualTestResult[]>([]);
-  const [functional_test_results, setFunctionalTestResult] = useState<FunctionalTestResult[]>([]);
-  const [current_design_selection_index, set_current_design_selection_index] = useState(0);
+  const [visual_test_results, setVisualTestResult] = useState<
+    VisualTestResult[]
+  >([]);
+  const [functional_test_results, setFunctionalTestResult] = useState<
+    FunctionalTestResult[]
+  >([]);
+  const [current_design_selection_index, set_current_design_selection_index] =
+    useState(0);
 
+  const [progress, setProgress] = useState(0);
+  useEffect(() => {
+    let currentProgress = 0;
+    const increment = 75 / 60; // Smooth transition over ~3 seconds (60 steps)
+
+    const interval = setInterval(() => {
+      currentProgress += increment;
+      setProgress(Math.min(currentProgress, 75)); // Stop at 75
+      if (currentProgress >= 75) clearInterval(interval);
+    }, 30);
+
+    return () => clearInterval(interval);
+  }, []);
   useEffect(() => {
     // Your code here
     fetch("http://localhost:9001/functional_testing_results.json")
       .then((response) => {
         response.json().then((data) => {
-          console.log(data)
-          setFunctionalTestResult(data)
-        })
+          console.log(data);
+          setFunctionalTestResult(data);
+        });
       })
-      .catch((error) => console.error("Error fetching functional test results:", error));
+      .catch((error) =>
+        console.error("Error fetching functional test results:", error),
+      );
   }, []);
 
   useEffect(() => {
@@ -75,28 +101,30 @@ export default function Home() {
     fetch("http://localhost:9001/visual_testing_results.json")
       .then((response) => {
         response.json().then((data) => {
-          console.log(data)
-          setVisualTestResult(data)
-        })
+          console.log(data);
+          setVisualTestResult(data);
+        });
       })
-      .catch((error) => console.error("Error fetching visual test results:", error));
-  })
+      .catch((error) =>
+        console.error("Error fetching visual test results:", error),
+      );
+  });
 
   const reduce_design_selection_index = () => {
     if (current_design_selection_index > 0) {
       set_current_design_selection_index(current_design_selection_index - 1);
-    }else{
+    } else {
       set_current_design_selection_index(visual_test_results.length - 1);
     }
-  }
+  };
 
   const increase_design_selection_index = () => {
     if (current_design_selection_index < visual_test_results.length - 1) {
       set_current_design_selection_index(current_design_selection_index + 1);
-    }else{
+    } else {
       set_current_design_selection_index(0);
     }
-  }
+  };
 
   const code = `const DummyComponent = () => {
   const [count, setCount] = React.useState(0);
@@ -145,28 +173,29 @@ export default function Home() {
                     </div>
                   </div>
                   <div className="flex">
-                    <ArrowLeft onClick={reduce_design_selection_index}></ArrowLeft>
-                    <ArrowRight onClick={increase_design_selection_index}></ArrowRight>
+                    <ArrowLeft
+                      onClick={reduce_design_selection_index}
+                    ></ArrowLeft>
+                    <ArrowRight
+                      onClick={increase_design_selection_index}
+                    ></ArrowRight>
                   </div>
                 </div>
                 <div className="bg-[#f8fafc] rounded-lg mt-4 flex items-center justify-center">
-
-                    {visual_test_results.length > 0 && (
-                      <img
-                        src={`http://localhost:9001/${visual_test_results[current_design_selection_index].page_id}.png`}
-                        alt="Image"
-                        width={600}
-                        height={400}
-                        className="rounded-lg"
-                      />
-                    )}
-                
+                  {visual_test_results.length > 0 && (
+                    <img
+                      src={`http://localhost:9001/${visual_test_results[current_design_selection_index].page_id}.png`}
+                      alt="Image"
+                      width={600}
+                      height={400}
+                      className="rounded-lg"
+                    />
+                  )}
                 </div>
                 <div className="flex items-center justify-center rounded-full h-10 w-52 shadow-lg font-bold mt-6">
                   Code Implementation
                 </div>
                 <div className="bg-[#f8fafc] rounded-lg mt-4 flex items-center justify-center">
-                  
                   {visual_test_results.length > 0 && (
                     <img
                       src={`http://localhost:9001/screenshot_${visual_test_results[current_design_selection_index].page_id}.png`}
@@ -176,10 +205,21 @@ export default function Home() {
                       className="rounded-lg"
                     />
                   )}
-
-                  </div>
+                </div>
               </div>
               <div className="mr-4">
+                <Card className="mb-8">
+                  <CardHeader>
+                    <CardTitle>Overall fidelity score</CardTitle>
+                    <div className="flex items-center gap-x-3">
+                      <Progress
+                        value={progress}
+                        className="transition-all ease-in-out"
+                      />{" "}
+                      {Math.round(progress)}%
+                    </div>
+                  </CardHeader>
+                </Card>
                 <Tabs defaultValue="working">
                   <TabsList className="grid grid-cols-3">
                     <TabsTrigger value="working">
@@ -189,34 +229,41 @@ export default function Home() {
                     <TabsTrigger value="reco">Recommendations</TabsTrigger>
                   </TabsList>
                   <TabsContent value="working">
-                    {
-                      visual_test_results.length > 0 && (
-                      (visual_test_results[current_design_selection_index].working).map((result, index) => (
-                      <Card key={`${current_design_selection_index}-${index}`}>
-                        <CardHeader>
-                        <div className="flex items-center gap-x-3">
-                          <CircleCheck className="text-green-500" />
-                          <div className="flex flex-col">
-                          <CardTitle>{result.title}</CardTitle>
-                          <CardDescription>{result.description}</CardDescription>
-                          </div>
-                        </div>
-                        </CardHeader>
-                      </Card>
-                      )))
-                    }
+                    {visual_test_results.length > 0 &&
+                      visual_test_results[
+                        current_design_selection_index
+                      ].working.map((result, index) => (
+                        <Card
+                          key={`${current_design_selection_index}-${index}`}
+                        >
+                          <CardHeader>
+                            <div className="flex items-center gap-x-3">
+                              <CircleCheck className="text-green-500" />
+                              <div className="flex flex-col">
+                                <CardTitle>{result.title}</CardTitle>
+                                <CardDescription>
+                                  {result.description}
+                                </CardDescription>
+                              </div>
+                            </div>
+                          </CardHeader>
+                        </Card>
+                      ))}
                   </TabsContent>
                   <TabsContent value="improve">
-                    {
-                      visual_test_results.length > 0 && (
-                      (visual_test_results[current_design_selection_index].wrong).map((result, index) => (
+                    {visual_test_results.length > 0 &&
+                      visual_test_results[
+                        current_design_selection_index
+                      ].wrong.map((result, index) => (
                         <Card key={index}>
                           <CardHeader>
                             <div className="flex items-center gap-x-3">
                               <CircleX className="text-red-500" />
                               <div className="flex flex-col">
                                 <CardTitle>{result.title}</CardTitle>
-                                <CardDescription>{result.description}</CardDescription>
+                                <CardDescription>
+                                  {result.description}
+                                </CardDescription>
                               </div>
                             </div>
                           </CardHeader>
@@ -224,29 +271,32 @@ export default function Home() {
                             <Button variant="outline">Highlight Section</Button>
                           </CardContent>
                         </Card>
-                      )))
-                    }
+                      ))}
                   </TabsContent>
                   <TabsContent value="reco">
-                    {
-                      visual_test_results.length > 0 && (
-                      (visual_test_results[current_design_selection_index].recommendations).map((result, index) => (
+                    {visual_test_results.length > 0 &&
+                      visual_test_results[
+                        current_design_selection_index
+                      ].recommendations.map((result, index) => (
                         <Card key={index}>
                           <CardHeader>
                             <div className="flex items-center gap-x-3">
                               <Info className="text-blue-500" />
                               <div className="flex flex-col">
                                 <CardTitle>{result.title}</CardTitle>
-                                <CardDescription>{result.description}</CardDescription>
+                                <CardDescription>
+                                  {result.description}
+                                </CardDescription>
                               </div>
                             </div>
                           </CardHeader>
                           <CardContent className="ml-8 -mt-4">
-                            <Button variant="outline">Commit Recommendation</Button>
+                            <Button variant="outline">
+                              Commit Recommendation
+                            </Button>
                           </CardContent>
                         </Card>
-                      )))
-                    }
+                      ))}
                   </TabsContent>
                 </Tabs>
               </div>
@@ -415,25 +465,25 @@ export default function Home() {
               <AccordionItem value="behaviour">
                 <AccordionTrigger>Functional behaviour</AccordionTrigger>
                 <AccordionContent>
-                  {
-                    (functional_test_results).map((result: any, index: number) => (
-                      <Card key={index}>
-                        <CardHeader>
-                          <div className="flex items-center gap-x-3">
-                            {result.succeeded ? (
-                              <CircleCheck className="text-green-500" />
-                            ) : (
-                              <CircleX className="text-red-500" />
-                            )}
-                            <div className="flex flex-col gap-y-1">
-                              <CardTitle>{result.page_title}</CardTitle>
-                              <CardDescription>{result.description}</CardDescription>
-                            </div>
+                  {functional_test_results.map((result: any, index: number) => (
+                    <Card key={index}>
+                      <CardHeader>
+                        <div className="flex items-center gap-x-3">
+                          {result.succeeded ? (
+                            <CircleCheck className="text-green-500" />
+                          ) : (
+                            <CircleX className="text-red-500" />
+                          )}
+                          <div className="flex flex-col gap-y-1">
+                            <CardTitle>{result.page_title}</CardTitle>
+                            <CardDescription>
+                              {result.description}
+                            </CardDescription>
                           </div>
-                        </CardHeader>
-                      </Card>
-                    ))
-                  }
+                        </div>
+                      </CardHeader>
+                    </Card>
+                  ))}
                 </AccordionContent>
               </AccordionItem>
             </Accordion>

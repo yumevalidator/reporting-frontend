@@ -3,6 +3,8 @@ import localFont from "next/font/local";
 import "./globals.css";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import Image from "next/image";
+import Logo from "../public/logo.svg";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -32,7 +34,14 @@ export default function RootLayout({
       >
         <header className="flex justify-between font-helvetica">
           <div className="flex items-center my-4 ml-4 gap-4">
-            <Link href="/" className="text-xl font-semibold">
+            <Link href="/" className="text-xl font-semibold flex">
+              <Image
+                src={Logo}
+                alt="logo"
+                width={23}
+                height={26}
+                className="mr-2"
+              />
               YumeValidator
             </Link>
             <Link href="/">Features</Link>
